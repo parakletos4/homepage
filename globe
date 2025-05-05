@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive 3D Globe</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+        #globeContainer {
+            width: 100vw;
+            height: 100vh;
+        }
+        #clocks {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 5px;
+            font-family: Arial, sans-serif;
+        }
+        .clock {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="globeContainer"></div>
+    <div id="clocks"></div>
+
+    <!-- Three.js dependencies -->
+    <script src="https://unpkg.com/three"></script>
+    <script src="https://unpkg.com/three-globe"></script>
+    <script src="https://unpkg.com/three/examples/js/controls/OrbitControls.js"></script>
+
+    <script>
+        // Initialize Globe
+        const globe = new ThreeGlobe()
+            .globeImageUrl('//unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
+            .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png');
+
+        // Setup scene
+        const scene = new THREE.Scene();
+        scene.add(globe);
+        scene.add(new THREE.AmbientLight(0xcccccc));
+        scene.add(new THREE.DirectionalLight(0xffffff, 0.8));
+
+        // Setup renderer
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('globeContainer').appendChild(renderer.domElement);
+
+        // Setup camera
+        const camera = new THREE.PerspectiveCamera();
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        camera.position.z = 300;
+
+        // Add controls
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+
+        // Auto-rotation
+        let autoRotate = true;
+        let rotationSpeed = 0.002;
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            if (autoRotate) {
+                globe.rotation.y += rotationSpeed;
+            }
+            
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Original clock functionality (now overlaid on globe)
+        const timeZones = [
+            { name: "UTC", zone: "UTC" },
+            { name: "New York (EST)", zone: "America/New_York" },
+            { name: "London (GMT)", zone: "Europe/London" },
+            { name: "Tokyo (JST)", zone: "Asia/Tokyo" },
+            { name: "Sydney (AEST)", zone: "Australia/Sydney" }
+        ];
+
+        const clocksContainer = document.getElementById('clocks');
+
+        function updateClocks() {
+            clocksContainer.innerHTML = '';
+            timeZones.forEach(({ name, zone }) => {
+                const now = new Date();
+                const options = { timeZone: zone, hour: '2-digit', minute: '2-digit', second: '2-digit' };
+                const time = now.toLocaleTimeString('en-US', options);
+                const clockDiv = document.createElement('div');
+                clockDiv.className = 'clock';
+                clockDiv.textContent = `${name}: ${time}`;
+                clocksContainer.appendChild(clockDiv);
+            });
+        }
+
+        setInterval(updateClocks, 1000);
+        updateClocks();
+    </script>
+</body>
+</html>
